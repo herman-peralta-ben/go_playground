@@ -8,3 +8,6 @@ Create a simple Go project with:
 mkdir simple-grpc && cd simple-grpc
 go mod init example.com/simple-grpc
 ```
+
+## VSCode extensions
+* [Markdown Code Block Runner](https://marketplace.visualstudio.com/items?itemName=renathossain.markdown-runner).
