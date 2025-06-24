@@ -56,7 +56,7 @@ export STRIPE_SECRET_KEY=sk_test_abc....
 
 4. Run
 ```bash
-go run main.go
+go run .
 ```
 Links
 * Method type: https://dashboard.stripe.com/test/settings/payment_methods

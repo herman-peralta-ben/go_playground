@@ -10,10 +10,15 @@ import (
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/paymentintent"
 	"github.com/stripe/stripe-go/webhook"
+
+	// Local imports, see `../../utils/go.mod` and `one_click_checkout/go.mod`
+	"local/shared"
 )
 
+// run with `go run .`
 func main() {
 	// Set Stripe secret key
+	shared.LoadDotEnv("../.env")
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
 	// Register routes
