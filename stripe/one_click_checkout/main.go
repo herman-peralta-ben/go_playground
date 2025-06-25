@@ -23,11 +23,13 @@ func main() {
 
 	// Register routes
 	http.HandleFunc("/create-one-click-checkout-card-payment-intent", handleCreateOneClickCheckoutCardPaymentIntent)
+	http.HandleFunc("/create-unconfirmed-payment-intent", handleCreateUnconfirmedIntent)
 
 	// TODO register webhook on Stripe
 	http.HandleFunc("/webhook", handleStripeWebhook)
 
 	log.Println("🚀 Server running on http://localhost:8080")
+	log.Println("   🤖 Use http://10.0.2.2:8080/api on Android emulator")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
@@ -63,12 +65,12 @@ type PaymentIntentResponse struct {
 func handleCreateOneClickCheckoutCardPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	var req PaymentIntentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Println("Invalid JSON:", err)
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		log.Println("‼️ Invalid OneClickCheckoutCardPaymentRequest:", err)
+		http.Error(w, "Invalid OneClickCheckoutCardPaymentRequest", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("⬇️ PaymentIntentRequest:  (methodId=%s, amount=%d, currency=%s, userId=%s, productId=%s)\n",
+	log.Printf("⬇️ OneClickCheckoutCardPaymentRequest:  {methodId=%s, amount=%d, currency=%s, userId=%s, productId=%s}\n",
 		req.PaymentMethodID, req.Amount, req.Currency, req.UserId, req.ProductId)
 
 	params := &stripe.PaymentIntentParams{
@@ -98,14 +100,52 @@ func handleCreateOneClickCheckoutCardPaymentIntent(w http.ResponseWriter, r *htt
 
 	intent, err := paymentintent.New(params)
 	if err != nil {
-		log.Println("Stripe error:", err)
+		log.Println("‼️ Stripe error:", err)
 		http.Error(w, "Failed to create payment intent", http.StatusInternalServerError)
 		return
 	}
 
 	resp := PaymentIntentResponse{ClientSecret: intent.ClientSecret}
 
-	log.Printf("⬆️ PaymentIntentResponse: Resp=%s\n", resp)
+	log.Printf("⬆️ OneClickCheckoutCardPaymentResponse: %s\n", resp)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func handleCreateUnconfirmedIntent(w http.ResponseWriter, r *http.Request) {
+	var req PaymentIntentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println("‼️ Invalid UnconfirmedIntentRequest:", err)
+		http.Error(w, "Invalid UnconfirmedIntentRequest", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("⬇️ UnconfirmedIntentRequest:  {methodId=%s, amount=%d, currency=%s, userId=%s, productId=%s}\n",
+		req.PaymentMethodID, req.Amount, req.Currency, req.UserId, req.ProductId)
+
+	params := &stripe.PaymentIntentParams{
+		Amount:        stripe.Int64(req.Amount),
+		Currency:      stripe.String(req.Currency),
+		PaymentMethod: stripe.String(req.PaymentMethodID),
+		Confirm:       stripe.Bool(false), // Required to allow confirm later
+		AutomaticPaymentMethods: &stripe.PaymentIntentAutomaticPaymentMethodsParams{
+			Enabled: stripe.Bool(true),
+		},
+	}
+
+	intent, err := paymentintent.New(params)
+	if err != nil {
+		log.Printf("‼️ Stripe error: %v", err)
+		http.Error(w, "Failed to create payment intent", http.StatusInternalServerError)
+		return
+	}
+
+	resp := PaymentIntentResponse{
+		ClientSecret: intent.ClientSecret,
+	}
+
+	log.Printf("⬆️ UnconfirmedIntentResponse: %s\n", resp)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
