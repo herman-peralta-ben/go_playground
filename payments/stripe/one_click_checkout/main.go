@@ -11,9 +11,11 @@ import (
 	"github.com/stripe/stripe-go/v78/paymentintent"
 	"github.com/stripe/stripe-go/webhook"
 
-	// Local imports, see `../../utils/go.mod` and `one_click_checkout/go.mod`
+	// Local
 	"local/shared"
 )
+
+const port = "8080"
 
 // run with `go run .`
 func main() {
@@ -28,9 +30,9 @@ func main() {
 	// TODO register webhook on Stripe
 	http.HandleFunc("/webhook", handleStripeWebhook)
 
-	log.Println("🚀 Server running on http://localhost:8080")
-	log.Println("   🤖 Use http://10.0.2.2:8080/api on Android emulator")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("🚀 Stripe Server running on http://localhost:%s", port)
+	log.Printf("   🤖 Use http://10.0.2.2:%s/<api> on Android emulator", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 type PaymentIntentRequest struct {

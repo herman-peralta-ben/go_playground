@@ -10,4 +10,4 @@ require (
 
 // $ go mod edit -replace local/shared=../../shared
 // $ go get local/shared
-replace local/shared => ../../shared
+replace local/shared => ../../../shared
